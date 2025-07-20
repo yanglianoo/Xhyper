@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [ 
+                "/home/timer/xhyper/Xhyper/hypervisor/include"
+            ],
+            "defines": []
+
+        }
+    ],
+    "version": 4
+}
