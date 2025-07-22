@@ -9,3 +9,14 @@ u64 strlen(const char *s)
         len++;
     return len;
 }
+
+/*---------------------memset-------------------------------*/
+void *memset(void *dst, int c, u64 n) {
+    char *d = dst;
+
+    while(n-- > 0) {
+        *d++ = c;
+    }
+
+    return dst;
+}

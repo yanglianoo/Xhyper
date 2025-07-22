@@ -34,5 +34,10 @@ SECTIONS
     }
     . = ALIGN(4096);
 
+    blk_pool_start = .;
+    . += (SZ_4K * 3);
+    blk_pool_end   = .;
+    . = ALIGN(4096);
+    
     HIMAGE_END = .;
 }
