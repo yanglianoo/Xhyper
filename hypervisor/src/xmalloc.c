@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "printf.h"
 #include <errno.h>
+#include "spinlock.h"
 
 extern blk_pool_t blk_pool_start[];
 

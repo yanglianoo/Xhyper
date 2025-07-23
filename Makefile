@@ -25,6 +25,9 @@ X_HYPER_SRCS = \
 	$(SRC_DIR)/pl011.c \
 	$(SRC_DIR)/utils.c \
 	$(SRC_DIR)/printf.c \
+	$(SRC_DIR)/spinlock.c \
+	$(SRC_DIR)/xmalloc.c \
+	$(SRC_DIR)/kalloc.c \
 	$(SRC_DIR)/main.c
 
 # Object files

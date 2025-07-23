@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "arch.h"
-
+#include "printf.h"
 typedef struct spinlock {
     int   coreid;
     u8    lock;
@@ -12,7 +12,7 @@ typedef struct spinlock {
 
 static inline int spin_check(spinlock_t *spinlock)
 {
-    if(spinlock->coreid && spinlock->coreid == coreid()){
+    if(spinlock->lock && spinlock->coreid == coreid()){
         return 1;
     } else {
         return 0;

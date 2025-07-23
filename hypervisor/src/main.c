@@ -1,6 +1,8 @@
 #include <printf.h>
 #include <layout.h>
 #include <pl011.h>
+#include <xmalloc.h>
+#include <kalloc.h>
 
 __attribute__((aligned(SZ_4K))) char sp_stack[SZ_4K * NCPU] = {0};
 
@@ -18,5 +20,15 @@ int hyper_init_primary()
 {
     pl011_init();
     print_logo();
+
+    /* xmalloc init */
+    xmalloc_init();
+    /* kalloc init */
+    kalloc_init();
+
+    printf("xmalloc and kalloc have been initialized\n");
+
+    while(1) {}
+
     return 0;
 }
