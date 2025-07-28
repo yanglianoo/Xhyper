@@ -3,6 +3,8 @@
 #include <pl011.h>
 #include <xmalloc.h>
 #include <kalloc.h>
+#include <xlog.h>
+#include <vmm.h>
 
 __attribute__((aligned(SZ_4K))) char sp_stack[SZ_4K * NCPU] = {0};
 
@@ -16,6 +18,8 @@ void print_logo(void)
     printf("\n");
 }
 
+extern void test_create_vm_mapping(void);
+
 int hyper_init_primary()
 {
     pl011_init();
@@ -26,7 +30,12 @@ int hyper_init_primary()
     /* kalloc init */
     kalloc_init();
 
-    printf("xmalloc and kalloc have been initialized\n");
+    LOG_INFO("xmalloc and kalloc have been initialized\n");
+
+    stage2_mmu_init();
+    hyper_setup();
+
+    test_create_vm_mapping();
 
     while(1) {}
 

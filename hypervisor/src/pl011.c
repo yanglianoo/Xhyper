@@ -1,8 +1,6 @@
 
 #include <pl011.h>
-
-/* PL011设备寄存器的基地址 */
-#define PL011BASE   0x09000000
+#include <layout.h>
 
 #define REG(reg)    (volatile unsigned int *)(PL011BASE + reg)
 

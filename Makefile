@@ -1,83 +1,97 @@
 # Makefile for X-Hyper project
+# Generated from CMakeLists.txt for ARMv8-A hypervisor build
+# All intermediate and output files are placed in the build/ directory
 
 # Cross-compiler prefix
 CROSS_COMPILE = aarch64-linux-gnu-
 
-# Compilers and linker
+# Compilers and tools
 CC = $(CROSS_COMPILE)gcc
 AS = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
 # Compiler and assembler flags
-ASM_FLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wextra -Wfatal-errors -Werror -O0 -g3 -D__ASSEMBLY__
+ASMFLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wextra -Wfatal-errors -Werror -O0 -g3 -D__ASSEMBLY__
 CFLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wall -Wextra -Wfatal-errors -Werror -Wno-psabi -O0 -g3 -D__LITTLE_ENDIAN -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable -Wno-override-init
 
-# Directories
-INCLUDE_DIR = ./hypervisor/include
-SRC_DIR = ./hypervisor/src
-LDS_DIR = ./hypervisor/src/lds
-BUILD_DIR = build
+# Include directories
+INCLUDE_DIRS = -I./hypervisor/include
 
 # Source files
 X_HYPER_SRCS = \
-	$(SRC_DIR)/head.S \
-	$(SRC_DIR)/pl011.c \
-	$(SRC_DIR)/utils.c \
-	$(SRC_DIR)/printf.c \
-	$(SRC_DIR)/spinlock.c \
-	$(SRC_DIR)/xmalloc.c \
-	$(SRC_DIR)/kalloc.c \
-	$(SRC_DIR)/main.c
+	hypervisor/src/head.S \
+	hypervisor/src/pl011.c \
+	hypervisor/src/utils.c \
+	hypervisor/src/spinlock.c \
+	hypervisor/src/printf.c \
+	hypervisor/src/xmalloc.c \
+	hypervisor/src/kalloc.c \
+	hypervisor/src/guest.c \
+	hypervisor/src/vmm.c \
+	hypervisor/src/main.c \
+	test/stage2_translation_test.c
 
-# Object files
-X_HYPER_OBJS = $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(X_HYPER_SRCS:.S=.o))
-X_HYPER_OBJS := $(X_HYPER_OBJS:.c=.o)
+# Object files (placed in build/)
+X_HYPER_OBJS = $(patsubst %.c,build/%.o,$(X_HYPER_SRCS))
+X_HYPER_OBJS := $(patsubst %.S,build/%.o,$(X_HYPER_OBJS))
 
-# Linker script
-LSCRIPT = $(LDS_DIR)/linker.ld.S
-LSCRIPT_OBJ = $(BUILD_DIR)/linker.ld.S.o
-LSCRIPT_PREPROCESSED = $(BUILD_DIR)/linker.ld
+# Linker script and guest VM image
+LSCRIPT_SRC = hypervisor/src/lds/linker.ld.S
+LSCRIPT = build/linker.ld
+GUEST_VM_IMAGE = ./guest/Guest_VM.o
 
-# Output files
-OUTPUT = $(BUILD_DIR)/X-Hyper.elf
-MAP = $(BUILD_DIR)/X-Hyper.map
-BINARY = $(BUILD_DIR)/X-Hyper
-
-# Create build directory
-$(shell mkdir -p $(BUILD_DIR))
+# Output files (placed in build/)
+LIB = build/libx_hyper_libs.a
+ELF = build/X-Hyper.elf
+BINARY = build/X-Hyper
+MAP = build/X-Hyper.map
 
 # Default target
 all: $(BINARY)
+	@echo "-- X-Hyper build complete --"
 
-# Rule to build the final binary
-$(BINARY): $(OUTPUT)
+# Create build directory
+$(X_HYPER_OBJS) $(LIB) $(LSCRIPT) $(ELF) $(BINARY): | build_dirs
+build_dirs:
+	@mkdir -p build/hypervisor/src build/test
+
+# Static library
+$(LIB): $(X_HYPER_OBJS)
+	@echo "-- Compiling X-Hyper_libs --"
+	@ar rcs $@ $^
+
+# Object file rules
+build/%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
+build/%.o: %.S
+	$(AS) $(ASMFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
+# Preprocess linker script
+$(LSCRIPT): $(LSCRIPT_SRC)
+	@echo "-- Preprocessing linker.ld.S to build/linker.ld --"
+	$(CC) -E -P $(LSCRIPT_SRC) -o $@ $(INCLUDE_DIRS)
+
+# Linker command
+ifeq ($(wildcard $(GUEST_VM_IMAGE)),)
+$(ELF): $(LIB) $(LSCRIPT)
+	@echo "-- Linking X-Hyper_libs without Guest_VM.o --"
+	$(LD) -pie -Map $(MAP) -T$(LSCRIPT) -Lbuild -lx_hyper_libs -o $@
+else
+$(ELF): $(LIB) $(LSCRIPT) $(GUEST_VM_IMAGE)
+	@echo "-- Linking X-Hyper_libs with Guest_VM.o --"
+	$(LD) -pie -Map $(MAP) -T$(LSCRIPT) -Lbuild -lx_hyper_libs $(GUEST_VM_IMAGE) -o $@
+endif
+
+# Binary image generation
+$(BINARY): $(ELF)
 	@echo "-- Generating X-Hyper binary --"
 	$(OBJCOPY) -O binary -R .note -R .note.gnu.build-id -R .comment -S $< $@
 
-# Rule to link the executable
-$(OUTPUT): $(X_HYPER_OBJS) $(LSCRIPT_PREPROCESSED)
-	@echo "-- Linking X-Hyper_libs --"
-	$(LD) -pie -Map $(MAP) -T$(LSCRIPT_PREPROCESSED) -L$(BUILD_DIR) $(X_HYPER_OBJS) -o $@
-
-# Rule to preprocess linker script
-$(LSCRIPT_PREPROCESSED): $(LSCRIPT)
-	@echo "-- Compiling linker.ld.S --"
-	$(AS) -P -E -D__ASSEMBLY__ -I$(INCLUDE_DIR) $< -o $@
-
-# Rule for assembling .S files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
-	@echo "-- Compiling $< --"
-	$(AS) $(ASM_FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
-
-# Rule for compiling .c files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@echo "-- Compiling $< --"
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
-
 # Clean target
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf build
 
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean build_dirs
