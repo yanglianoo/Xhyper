@@ -16,10 +16,10 @@ ASM_FLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wextra -Wfatal-errors -We
 C_FLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wall -Wextra -Wfatal-errors -Werror -Wno-psabi -O0 -g3 -D__LITTLE_ENDIAN
 
 # Include directories
-INCLUDE_DIRS = -I.
+INCLUDE_DIRS = -I./include
 
 # Source files
-VM_SRCS = head.S main.c
+VM_SRCS = head.S main.c printf.c libs.c pl011.c
 
 # Object files (generate in build/, avoid duplicates)
 VM_OBJS = $(addprefix $(BUILD_DIR)/, $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(VM_SRCS))))

@@ -18,6 +18,7 @@ vm_config_t guest_vm_cfg = {
     .guest_dtb    = NULL,
     .guest_initrd = NULL,
     .entry_addr   = 0x80200000,
+    .ram_size     = 0x80000,
 };
 
 void test_create_vm_mapping(void)
@@ -40,16 +41,6 @@ void test_create_vm_mapping(void)
     /* create normal range mapping for guest */
     u64   p;
     char *page;
-    LOG_INFO("(Testing) Create normal range mapping for guest\n");
-    /* 为虚拟机的内存范围（GUEST_MEM_SIZE）创建普通内存映射 */
-    for(p = 0; p < GUEST_MEM_SIZE; p += PAGESIZE) {
-        /* Alloc a page size physical memory */
-        page = alloc_one_page();
-        if(page == NULL) {
-            abort("Unable to alloc a page");
-        }
-        create_guest_mapping(vttbr, 0x80000000 + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
-    }
 
     /* create guest image mapping */
     LOG_INFO("(Testing) Create guest image mapping\n");
@@ -68,6 +59,16 @@ void test_create_vm_mapping(void)
         }
         /* copy the guest image content from X-Hyper image to pages */
         memcpy(page, (char *)guest_vm_cfg.guest_image->start_addr + p, copy_size);
+        create_guest_mapping(vttbr, guest_vm_cfg.entry_addr + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
+    }
+
+    LOG_INFO("(Testing) Create normal range mapping for guest\n");
+    for( ; p < guest_vm_cfg.ram_size; p += PAGESIZE) {
+        /* Alloc a page size physical memory */
+        page = alloc_one_page();
+        if(page == NULL) {
+            abort("Unable to alloc a page");
+        }
         create_guest_mapping(vttbr, guest_vm_cfg.entry_addr + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
     }
 

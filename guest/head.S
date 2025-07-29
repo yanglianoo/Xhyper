@@ -1,15 +1,21 @@
+#include "config.h"
+
 .section .text, "ax"
 .global  _start
 .type    _start, function
 .align 4
 
 _start:
-    mrs  x0, CurrentEL
-
-    /* Print 0 to PL011 */
-    mov  x3, 0x09000000
-    mov  x2, 0x30
-    str  w2, [x3]
-
+    /* Set stack for c code */
+    adrp    x0, sp_stack
+    /* Get Current code id */
+    mrs     x1, mpidr_el1
+    and     x1, x1, #0x0f
+    add     x2, x1, 1
+    mov     x3, #SZ_4K
+    mul     x3, x3, x2
+    add     x0, x0, x3
+    mov     sp, x0
+    bl      vm_primary_init
     /* spin here */
     b       .

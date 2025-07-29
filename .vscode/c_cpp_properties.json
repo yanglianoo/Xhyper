@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [ 
-                "/home/timer/xhyper/Xhyper/hypervisor/include"
+                "/home/timer/xhyper/Xhyper/hypervisor/include",
+                "/home/timer/xhyper/Xhyper/guest/include"
             ],
             "defines": []
 

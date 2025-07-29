@@ -14,10 +14,13 @@ set(CMAKE_C_FLAGS   	"-march=armv8-a+nosimd+nofp")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -ffreestanding -Wextra -Wfatal-errors -Werror -O0 -g3 -D__ASSEMBLY__")
 set(CMAKE_C_FLAGS 	"${CMAKE_C_FLAGS} -ffreestanding -Wall -Wextra -Wfatal-errors -Werror -Wno-psabi -O0 -g3 -D__LITTLE_ENDIAN")
 
-include_directories("./")
+include_directories("./include")
 
 set(VM_SRCS
 	./head.S
+	./pl011.c
+	./printf.c
+	./libs.c
 	./main.c
 )
 
