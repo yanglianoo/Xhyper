@@ -19,6 +19,10 @@
 // 数据同步屏障
 #define dsb(sy) asm volatile("dsb " #sy);
 
+/* SPSR_EL2 */
+#define SPSR_M(n)    (n & 0xf)
+#define SPSR_DAIF    (0xf << 6)
+
 // 读取当前核心id
 static inline int coreid()
 {

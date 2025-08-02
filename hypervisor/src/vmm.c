@@ -103,10 +103,21 @@ void stage2_mmu_init(void)
 }
 
 /* Provides configuration controls for virtualization */
+extern void hyper_vector();
 void hyper_setup()
-{
-    u64 hcr = HCR_RW | HCR_VM;
+{   
+    /*
+        HCR_TSC : 控制虚拟机的 SMC（Secure Monitor Call）指令是否陷入 Hypervisor
+        HCR_RW  : 决定虚拟机的执行状态是 AArch64 还是 AArch32
+        HCR_VM  : 开启或关闭 Stage-2 地址转换
+    */
+    u64 hcr = HCR_TSC | HCR_RW | HCR_VM;
     LOG_INFO("Setting hcr_el2 to 0x%x and enable stage 2 address translation\n");
     write_sysreg(hcr_el2, hcr);
+
+    LOG_INFO("Setting Vector Base Address Register for EL2\n");
+    write_sysreg(vbar_el2, (u64)hyper_vector);
+
     isb();
 }
+

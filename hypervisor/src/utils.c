@@ -31,3 +31,11 @@ void *memcpy(void *dst, const void *src, size_t count)
     }
     return dst;
 }
+
+/*---------------------strcpy-------------------------------*/
+char *strcpy(char *dst, const char *src)
+{
+    char *r = dst;
+    while((*dst++ = *src++) != 0);
+    return r;
+}

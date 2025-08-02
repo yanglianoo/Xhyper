@@ -5,6 +5,8 @@
 #include <kalloc.h>
 #include <xlog.h>
 #include <vmm.h>
+#include <guest.h>
+#include <vm.h>
 
 __attribute__((aligned(SZ_4K))) char sp_stack[SZ_4K * NCPU] = {0};
 
@@ -19,6 +21,19 @@ void print_logo(void)
 }
 
 extern void test_create_vm_mapping(void);
+extern guest_t guest_vm_image;
+
+int hyper_init_secondary()
+{
+    LOG_INFO("core %d is activated\n", coreid());
+    stage2_mmu_init();
+    hyper_setup();
+    start_vcpu();
+    
+    while(1) {}
+    return 0;
+}
+
 
 int hyper_init_primary()
 {
@@ -30,12 +45,25 @@ int hyper_init_primary()
     /* kalloc init */
     kalloc_init();
 
-    LOG_INFO("xmalloc and kalloc have been initialized\n");
-
     stage2_mmu_init();
     hyper_setup();
 
-    test_create_vm_mapping();
+    pcpu_init();
+    vcpu_init();
+    LOG_INFO("Pcpu/vcpu arrays have been initialized\n");
+
+    vm_config_t guest_vm_cfg = {
+        .guest_image  = &guest_vm_image,
+        .guest_dtb    = NULL,
+        .guest_initrd = NULL,
+        .entry_addr   = 0x80200000,
+        .ram_size     = 0x80000,
+        .ncpu         = 2,
+    };
+
+    create_guest_vm(&guest_vm_cfg);
+
+    start_vcpu();
 
     while(1) {}
 

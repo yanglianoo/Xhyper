@@ -21,6 +21,7 @@ INCLUDE_DIRS = -I./hypervisor/include
 # Source files
 X_HYPER_SRCS = \
 	hypervisor/src/head.S \
+	hypervisor/src/vector.S \
 	hypervisor/src/pl011.c \
 	hypervisor/src/utils.c \
 	hypervisor/src/spinlock.c \
@@ -28,8 +29,12 @@ X_HYPER_SRCS = \
 	hypervisor/src/xmalloc.c \
 	hypervisor/src/kalloc.c \
 	hypervisor/src/guest.c \
+	hypervisor/src/el1_sync.c \
+	hypervisor/src/vcpu.c \
+	hypervisor/src/vm.c \
 	hypervisor/src/vmm.c \
 	hypervisor/src/main.c \
+	hypervisor/src/vpsci.c \
 	test/stage2_translation_test.c
 
 # Object files (placed in build/)
