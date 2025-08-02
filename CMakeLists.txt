@@ -19,6 +19,7 @@ add_subdirectory(./hypervisor/src/lds)
 
 set(X_HYPER_SRCS
 	./hypervisor/src/head.S
+	./hypervisor/src/vector.S
 	./hypervisor/src/pl011.c
 	./hypervisor/src/utils.c
 	./hypervisor/src/spinlock.c
@@ -27,6 +28,10 @@ set(X_HYPER_SRCS
 	./hypervisor/src/kalloc.c
 	./hypervisor/src/vmm.c
 	./hypervisor/src/guest.c
+	./hypervisor/src/vcpu.c
+	./hypervisor/src/vm.c
+	./hypervisor/src/el1_sync.c
+	./hypervisor/src/vpsci.c
 	./hypervisor/src/main.c
 
 	./test/stage2_translation_test.c
