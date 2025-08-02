@@ -16,6 +16,15 @@ _start:
     mul     x3, x3, x2
     add     x0, x0, x3
     mov     sp, x0
-    bl      vm_primary_init
+    cbz     x1, vm_primary_init
+    bl      vm_secondary_init
     /* spin here */
     b       .
+
+
+.global smc_call
+.type    smc_call, function
+smc_call:
+    smc #0
+    ret
+
