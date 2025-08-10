@@ -35,6 +35,7 @@ X_HYPER_SRCS = \
 	hypervisor/src/vmm.c \
 	hypervisor/src/main.c \
 	hypervisor/src/vpsci.c \
+	hypervisor/src/vmmio.c \
 	test/stage2_translation_test.c
 
 # Object files (placed in build/)

@@ -29,6 +29,52 @@ static int hvc_smc_handler(vcpu_t *vcpu, int imm)
     } 
 }
 
+static u64 get_fault_ipa(u64 vaddr)
+{
+    u64 hpfar;
+    read_sysreg(hpfar, hpfar_el2);
+    // 取出hpfar_el2寄存器的低40位，然后左移8位
+    u64 ipa_page = (hpfar & 0xfffffffffff) << 8;
+    // 加上页面偏移地址，就是实际的ipa fault地址
+    return ipa_page | (vaddr & (PAGESIZE - 1));
+}
+
+static int data_abort_handler(vcpu_t *vcpu, u64 esr_iss, u64 far)
+{
+    u64 ipa = get_fault_ipa(far);
+
+    int wnr = (esr_iss >> 6) & 0x1;   /* write or read */
+    int sas = (esr_iss >> 22) & 0x3;  /* Syndrome Access Size */
+    int srt = (esr_iss >> 16) & 0x1f; /* The register number of the Wt/Xt/Rt */
+    int fnv = (esr_iss >> 10) & 0x1;  /* far is valid or not valid */
+
+    if(fnv != 0) {
+        abort("FAR is not valid");
+    }  
+
+    enum access_size accesz;
+
+    switch(sas) {
+        case 0: accesz = VMMIO_BYTE; break;       //字节
+        case 1: accesz = VMMIO_HALFWORD; break;   //半字
+        case 2: accesz = VMMIO_WORD; break;       //字
+        case 3: accesz = VMMIO_DOUBLEWORD; break; //双字
+        default: abort("Unknow SAS from esr_el2");
+    }
+
+    struct vmmio_access vmmio_acs;
+
+    vmmio_acs.ipa = ipa;
+    vmmio_acs.accsize = accesz;
+    vmmio_acs.wnr = wnr;
+
+    if(vmmio_handler(vcpu, srt, &vmmio_acs) < 0) {
+        LOG_WARN("VMMIO handler failed: ipa %p, va %p\n");
+        return -1;
+    }
+
+    return 0;
+}
 void el1_sync_proc()
 {
     vcpu_t *vcpu;
@@ -72,6 +118,12 @@ void el1_sync_proc()
             /* smc trapped from EL1 will set preferred execption return address to pc
              * so we need to +4 return to the next instruction.
              */
+            vcpu->regs.elr += 4;
+            break;
+        /* data abort 内存访问异常*/
+            case 0x24:
+            LOG_INFO("\033[32m[el1_sync_proc] data abort from EL0/1\033[0m\n");
+            data_abort_handler(vcpu, esr_iss, far);
             vcpu->regs.elr += 4;
             break;
         default:

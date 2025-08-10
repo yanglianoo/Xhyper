@@ -35,6 +35,12 @@ int vm_primary_init()
     /* test code for wakeup vcore 1 */
     smc_call((u64)0xc4000003, (u64)1, (u64)_start);
 
+    volatile unsigned int *GICD_BASE = (volatile unsigned int *)(0x8000100);
+    *GICD_BASE = 100;
+
+    unsigned int y = *GICD_BASE;
+    printf("y is %d\n", y);
+
     while(1) {
         printf("I am vm 1 on core 0\n");
         for(int i=0; i < 100000000; i++);

@@ -67,6 +67,23 @@ void create_guest_mapping(u64 *pgt, u64 va, u64 pa, u64 size, u64 mattr)
     }
 }
 
+void page_unmap(u64 *pgt, u64 va, u64 size)
+{
+    if(va % PAGESIZE != 0 || size % PAGESIZE != 0) {
+        abort("Page_unmap with invalid param");
+    }
+    
+    for(u64 p = 0; p < size; p += PAGESIZE, va += PAGESIZE) {
+        u64 *pte = page_walk(pgt, va, false);
+        if(*pte == 0) {
+            abort("Page already unmapped");
+        }
+        u64 pa = PTE_PA(*pte);
+        free_one_page((void *)pa);
+        *pte = 0;
+    }
+}
+
 void stage2_mmu_init(void)
 {
     LOG_INFO("Stage2 Translation MMU initialization ...\n");

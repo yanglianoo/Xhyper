@@ -77,6 +77,7 @@
 void stage2_mmu_init(void);
 void hyper_setup();
 void create_guest_mapping(u64 *pgt, u64 va, u64 pa, u64 size, u64 mattr);
-
+void page_unmap(u64 *pgt, u64 va, u64 size);
+u64 *page_walk(u64 *pgt, u64 va, bool alloc);
 
 #endif

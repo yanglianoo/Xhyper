@@ -5,6 +5,10 @@
 #include <guest.h>
 #include <spinlock.h>
 #include <vcpu.h>
+#include <vmmio.h>
+
+
+struct vmmio_access;
 
 typedef struct vm_config {
     guest_t *guest_image;
@@ -21,8 +25,12 @@ typedef struct vm {
     u64       *vttbr;
     spinlock_t vm_lock;
     struct vcpu *vcpus[NCPU];
+    struct vmmio_info *vmmios;
 } vm_t;
 
 void create_guest_vm(vm_config_t *vm_config);
+void create_mmio_trap(struct vm *vm, u64 ipa, u64 size,
+                      int (*vmmio_read)(struct vcpu *, u64, u64 *, struct vmmio_access *),
+                      int (*vmmio_write)(struct vcpu *, u64, u64, struct vmmio_access *));
 
 #endif

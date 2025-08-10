@@ -17,4 +17,7 @@
 /* PL011设备寄存器的基地址 */
 #define PL011BASE   0x09000000
 
+#define GICD_BASE   0x08000000
+#define GICR_BASE   0x080a0000
+
 #endif

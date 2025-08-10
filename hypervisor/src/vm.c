@@ -28,6 +28,23 @@ static void vm_init(vm_t *vm, vm_config_t *vm_config)
     }
 }
 
+void create_mmio_trap(struct vm *vm, u64 ipa, u64 size,
+                      int (*vmmio_read)(struct vcpu *, u64, u64 *, struct vmmio_access *),
+                      int (*vmmio_write)(struct vcpu *, u64, u64, struct vmmio_access *))
+{
+
+    u64 *vttbr = vm->vttbr;
+    if(page_walk(vttbr, ipa, 0)) {
+        page_unmap(vttbr, ipa, size);
+    }
+
+    vmmio_handler_register(vm, ipa, size, vmmio_read, vmmio_write);
+
+    flush_tlb();
+
+    return;
+}
+
 static void do_memory_mapping(u64 *pgt, vm_config_t *vm_config)
 {
     /* create normal range mapping for guest */
@@ -70,6 +87,16 @@ static void do_memory_mapping(u64 *pgt, vm_config_t *vm_config)
 static void do_device_mapping(u64 *pgt, vm_config_t *vm_config)
 {
     create_guest_mapping(pgt, PL011BASE, PL011BASE, PAGESIZE, S2PTE_DEVICE | S2PTE_RW);
+}
+
+static int test_mmio_read(struct vcpu *vcpu, u64 offset, u64 *val, struct vmmio_access *vmmio)
+{
+    return 0;
+}
+
+static int test_mmio_write(struct vcpu *vcpu, u64 offset, u64 val, struct vmmio_access *vmmio)
+{
+    return 0;
 }
 
 void create_guest_vm(vm_config_t *vm_config)
@@ -131,6 +158,9 @@ void create_guest_vm(vm_config_t *vm_config)
     /* map the device memory */
     do_device_mapping(vttbr, vm_config);
 
+    /* TODO: test */
+    create_mmio_trap(vm, GICD_BASE, 0x10000, test_mmio_read, test_mmio_write);
+    create_mmio_trap(vm, GICR_BASE, 0x10000, NULL, NULL);
     /* set vcpu[0] ready */
     LOG_INFO("-->Set Guest vm vcpu[0] as ready\n");
 
