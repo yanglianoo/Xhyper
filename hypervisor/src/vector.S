@@ -1,5 +1,47 @@
 .section ".text"
 
+
+.macro save_hyp_regs
+    sub sp, sp, #256
+    stp x0, x1, [sp, #8 * 0]
+    stp x2, x3, [sp, #8 * 2]
+    stp x4, x5, [sp, #8 * 4]
+    stp x6, x7, [sp, #8 * 6]
+    stp x8, x9, [sp, #8 * 8]
+    stp x10, x11, [sp, #8 * 10]
+    stp x12, x13, [sp, #8 * 12]
+    stp x14, x15, [sp, #8 * 14]
+    stp x16, x17, [sp, #8 * 16]
+    stp x18, x19, [sp, #8 * 18]
+    stp x20, x21, [sp, #8 * 20]
+    stp x22, x23, [sp, #8 * 22]
+    stp x24, x25, [sp, #8 * 24]
+    stp x26, x27, [sp, #8 * 26]
+    stp x28, x29, [sp, #8 * 28]
+    str x30, [sp, #8 * 30]
+.endm
+
+
+.macro restore_hyp_regs
+    ldp x0, x1, [sp, #8 * 0]
+    ldp x2, x3, [sp, #8 * 2]
+    ldp x4, x5, [sp, #8 * 4]
+    ldp x6, x7, [sp, #8 * 6]
+    ldp x8, x9, [sp, #8 * 8]
+    ldp x10, x11, [sp, #8 * 10]
+    ldp x12, x13, [sp, #8 * 12]
+    ldp x14, x15, [sp, #8 * 14]
+    ldp x16, x17, [sp, #8 * 16]
+    ldp x18, x19, [sp, #8 * 18]
+    ldp x20, x21, [sp, #8 * 20]
+    ldp x22, x23, [sp, #8 * 22]
+    ldp x24, x25, [sp, #8 * 24]
+    ldp x26, x27, [sp, #8 * 26]
+    ldp x28, x29, [sp, #8 * 28]
+    ldr x30, [sp, #8 * 30]
+    add sp, sp, #256
+.endm
+
 .macro save_vm_regs
     stp x0, x1, [sp, #-16]!     /* save x0, x1 on stack */
     mrs x0, tpidr_el2           /* x0 = &vcpu->regs */
@@ -113,7 +155,10 @@ vector_el2_sync:
     b .
 
 vector_el2_irq:
-    b .
+    save_hyp_regs
+    bl el2_irq_proc
+    restore_hyp_regs
+    eret
 
 vector_el1_sync:
     save_vm_regs
@@ -122,5 +167,7 @@ vector_el1_sync:
     eret
 
 vector_el1_irq:
-    b .
-
+    save_vm_regs
+    bl el2_irq_proc
+    restore_vm_regs
+    eret

@@ -55,6 +55,23 @@ int pl011_getc()
     }
 }
 
+void pl011_irq_handler()
+{   
+    // 读取PL011MIS寄存器的值
+    int status = *REG(PL011MIS);
+    // bit[4] 为接收屏蔽状态，如果为1说明有数据输入了
+    if(status & (1 << 4)) {
+        for(;;) {
+            int c = pl011_getc();
+            if(c < 0)
+                break;
+            pl011_putc(c);
+        }   
+    }
+    // Interrupt Clear Register,
+    /* 清除接收中断屏蔽位 bit[4] */
+    *REG(PL011ICR) = (1 << 4);
+}
 void pl011_init()
 {
     /* Disable the Uart */

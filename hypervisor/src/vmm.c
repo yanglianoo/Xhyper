@@ -127,8 +127,10 @@ void hyper_setup()
         HCR_TSC : 控制虚拟机的 SMC（Secure Monitor Call）指令是否陷入 Hypervisor
         HCR_RW  : 决定虚拟机的执行状态是 AArch64 还是 AArch32
         HCR_VM  : 开启或关闭 Stage-2 地址转换
+        HCR_FMO : 控制快速中断（FIQ）是否路由到 Hypervisor EL2
+        HCR_IMO : 控制物理中断（IRQ）是否路由到 Hypervisor EL2
     */
-    u64 hcr = HCR_TSC | HCR_RW | HCR_VM;
+    u64 hcr = HCR_TSC | HCR_RW | HCR_VM | HCR_FMO | HCR_IMO;
     LOG_INFO("Setting hcr_el2 to 0x%x and enable stage 2 address translation\n");
     write_sysreg(hcr_el2, hcr);
 

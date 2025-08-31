@@ -19,6 +19,15 @@
 // 数据同步屏障
 #define dsb(sy) asm volatile("dsb " #sy);
 
+/*
+  - daifclr 是 "清除 DAIF 寄存器位" 的指令，
+  - #2 表示清除第 1 位（IRQ 屏蔽位，D=3, A=2, I=1, F=0）
+  - 即解除对 IRQ 中断的屏蔽。
+*/
+#define irq_enable asm volatile("msr daifclr, #2" ::: "memory")
+// 关闭IRQ中断
+#define irq_disable asm volatile("msr daifset, #2" ::: "memory")
+
 /* SPSR_EL2 */
 #define SPSR_M(n)    (n & 0xf)
 #define SPSR_DAIF    (0xf << 6)

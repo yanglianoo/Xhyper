@@ -7,6 +7,7 @@
 #include <vmm.h>
 #include <guest.h>
 #include <vm.h>
+#include <gicv3.h>
 
 __attribute__((aligned(SZ_4K))) char sp_stack[SZ_4K * NCPU] = {0};
 
@@ -45,6 +46,13 @@ int hyper_init_primary()
     /* kalloc init */
     kalloc_init();
 
+    /* gicv3 init */
+    gic_v3_init();
+    /* Config uart irq */
+    hyper_spi_config(UART_IRQ_LINE, GIC_EDGE_TRIGGER);
+    /* 开启中断 */
+    irq_enable;
+    
     stage2_mmu_init();
     hyper_setup();
 

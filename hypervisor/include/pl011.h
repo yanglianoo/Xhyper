@@ -6,4 +6,7 @@ void pl011_puts(char *s);
 int  pl011_getc(void);
 void pl011_init(void);
 
+#define UART_IRQ_LINE   33
+void pl011_irq_handler(void);
+
 #endif

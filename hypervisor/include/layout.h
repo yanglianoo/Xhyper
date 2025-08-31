@@ -18,6 +18,9 @@
 #define PL011BASE   0x09000000
 
 #define GICD_BASE   0x08000000
-#define GICR_BASE   0x080a0000
+#define GICD_SIZE   0x10000
+#define GICR_BASE   0x080a0000 // GIC Redistributor 映射地址
+#define GICR_SIZE   0x80000 
+#define GICR_STRIDE 0x20000
 
 #endif
