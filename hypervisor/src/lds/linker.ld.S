@@ -23,7 +23,9 @@ SECTIONS
     }
 
     .data : {
+      __data_start = .;
       *(.data) *(.data.*)
+      __data_end = .;
     }
     . = ALIGN(4096);
 

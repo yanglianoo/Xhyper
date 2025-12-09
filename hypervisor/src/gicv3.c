@@ -14,6 +14,82 @@
 #include <gicv3.h>
 
 int gic_max_lrs = 0;
+int gic_max_spi = 0;
+
+//初始化虚拟GICv3接口
+void gic_context_init(struct gicv3_context *gic_context)
+{
+    read_sysreg(gic_context->vmcr, ICH_VMCR_EL2);
+}
+
+void restore_gic_context(struct gicv3_context *gic_context)
+{
+    u32 sre;
+    write_sysreg(ICH_VMCR_EL2, gic_context->vmcr);
+    read_sysreg(sre, ICC_SRE_EL1);
+    write_sysreg(ICC_SRE_EL1, sre | gic_context->sre_el1);
+}
+
+//读取ICH_LR<n>_EL2寄存器的数据
+u64 gic_read_list_reg(int n)
+{
+    u64 val;
+    switch(n) {
+        case 0:   read_sysreg(val, ICH_LR0_EL2); break;
+        case 1:   read_sysreg(val, ICH_LR1_EL2); break;
+        case 2:   read_sysreg(val, ICH_LR2_EL2); break;
+        case 3:   read_sysreg(val, ICH_LR3_EL2); break;
+        case 4:   read_sysreg(val, ICH_LR4_EL2); break;
+        case 5:   read_sysreg(val, ICH_LR5_EL2); break;
+        case 6:   read_sysreg(val, ICH_LR6_EL2); break;
+        case 7:   read_sysreg(val, ICH_LR7_EL2); break;
+        case 8:   read_sysreg(val, ICH_LR8_EL2); break;
+        case 9:   read_sysreg(val, ICH_LR9_EL2); break;
+        case 10:  read_sysreg(val, ICH_LR10_EL2); break;
+        case 11:  read_sysreg(val, ICH_LR11_EL2); break;
+        case 12:  read_sysreg(val, ICH_LR12_EL2); break;
+        case 13:  read_sysreg(val, ICH_LR13_EL2); break;
+        case 14:  read_sysreg(val, ICH_LR14_EL2); break;
+        case 15:  read_sysreg(val, ICH_LR15_EL2); break;
+        default:  abort("Unknow ICH LR number");
+    }
+
+    return val; 
+}
+
+//写入ICH_LR<n>_EL2寄存器的数据
+void gic_write_list_reg(int n, u64 val)
+{
+    switch(n) {
+        case 0:   write_sysreg(ICH_LR0_EL2, val); break;
+        case 1:   write_sysreg(ICH_LR1_EL2, val); break;
+        case 2:   write_sysreg(ICH_LR2_EL2, val); break;
+        case 3:   write_sysreg(ICH_LR3_EL2, val); break;
+        case 4:   write_sysreg(ICH_LR4_EL2, val); break;
+        case 5:   write_sysreg(ICH_LR5_EL2, val); break;
+        case 6:   write_sysreg(ICH_LR6_EL2, val); break;
+        case 7:   write_sysreg(ICH_LR7_EL2, val); break;
+        case 8:   write_sysreg(ICH_LR8_EL2, val); break;
+        case 9:   write_sysreg(ICH_LR9_EL2, val); break;
+        case 10:  write_sysreg(ICH_LR10_EL2, val); break;
+        case 11:  write_sysreg(ICH_LR11_EL2, val); break;
+        case 12:  write_sysreg(ICH_LR12_EL2, val); break;
+        case 13:  write_sysreg(ICH_LR13_EL2, val); break;
+        case 14:  write_sysreg(ICH_LR14_EL2, val); break;
+        case 15:  write_sysreg(ICH_LR15_EL2, val); break;
+        default:  abort("Unknow ICH LR number");
+    }
+}
+
+u64 gic_create_lr(u32 pirq, u32 virq)
+{
+    /*
+     * The state of the interrupt is pending
+     * The interrupt maps directly to a hardware interrupt
+     * This is a Group 1 virtual interrupt
+     */
+    return LR_STATE(LR_PENDING) | LR_HW | LR_GROUP(1) | LR_PINTID(pirq) | LR_VINTID(virq);
+}
 
 /* 读取GICD_CTLR寄存器的bit[31]，确认GICD_CTLR寄存器写入是否有效*/
 static inline void gic_dist_wait_for_rwp(void)
@@ -33,6 +109,8 @@ static void gic_dist_init(void)
     gicd_type = GICD_READ32(GICD_TYPER);
     /* 0x1f= 0b11111 计算支持的最大SPI*/
     gic_irqs  = ((gicd_type & 0x1F) + 1) * 32;
+    gic_max_spi = gic_irqs - 1;
+    
     /* 用于计算控制所有中断所需的寄存器数量（每个寄存器控制 32 个中断），这里+31是向上取整。*/
     nr_regs = (gic_irqs + 31) / 32;
 
@@ -272,12 +350,22 @@ static void gic_set_config(u32 irq, u32 config)
     }
 }
 
+/* 
+ * 处理EL1下的中断结束，写入ICC_EOIR1_EL1寄存器，标志着结束
+ * 这个函数在EL2下被调用
+ */
+static void gic_guest_eoi(u32 irq)
+{
+    write_sysreg(ICC_EOIR1_EL1, irq);
+}
+
 struct gic_irq_ops gicv3_ops =  {
     .name         = "ARM GICv3",
     .mask         = gic_disable_int,
     .unmask       = gic_enable_int,
     .get_irq      = gic_get_iar,
     .hyp_eoi      = gic_hyp_eoi,
+    .guest_eoi    = gic_guest_eoi, 
     .dir          = gic_dir,
     .set_affinity = gic_set_target,
     .configure    = gic_set_config,

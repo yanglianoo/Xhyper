@@ -3,6 +3,7 @@
 #include "printf.h"
 #include <errno.h>
 #include "spinlock.h"
+#include <xlog.h>
 
 extern blk_pool_t blk_pool_start[];
 
@@ -56,6 +57,9 @@ int xmalloc_init(void)
                        (void *)((size_t)blk_pool_start + ALIGN_UP(sizeof(blk_pool_t))),
                        CONFIG_BLK_SIZE);  
     if (!ret) {
+        LOG_INFO("Xmalloc have been initialized: \n");
+        LOG_INFO("Xmalloc: pool_start : %x\n", blk_pool_start);
+        LOG_INFO("Xmalloc: pool_size  : %x\n", CONFIG_BLK_SIZE);
         sys_blk = blk_pool_start;
     }
     return ret; 

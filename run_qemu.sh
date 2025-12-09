@@ -11,7 +11,7 @@ QEMUOPTS="-cpu $QCPU -machine $MACHINE -smp $NCPU -m 128M -nographic \
 
 if [ $# -ne 0 ];then
     echo "debug mode ..."
-    $QEMU $QEMUOPTS -S -gdb tcp::7788
+    $QEMU $QEMUOPTS 
 else
     echo "run mode ..."
     $QEMU $QEMUOPTS

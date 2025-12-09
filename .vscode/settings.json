@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "gicv3.h": "c"
+        "gicv3.h": "c",
+        "vgicv3.h": "c"
     }
 }

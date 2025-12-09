@@ -16,14 +16,12 @@ void el2_irq_proc(void)
     /* 取出中断ID的值 0x3ff =0b 11 1111 1111 */
     irq = iar & 0x3FF;
 
-    LOG_INFO("EL2 IRQ Trapped, irq number is %d\n", irq);
-
     switch(irq) {
         case UART_IRQ_LINE:
             pl011_irq_handler();
         break;
         default:
-            LOG_WARN("Unknow IRQ under EL2\n");
+            LOG_WARN("Unknow IRQ under EL2, irq is %d\n", irq);
             break;
     }
 

@@ -27,17 +27,20 @@ extern guest_t guest_vm_image;
 int hyper_init_secondary()
 {
     LOG_INFO("core %d is activated\n", coreid());
+
+    gic_percpu_init();
+    irq_enable;
     stage2_mmu_init();
     hyper_setup();
     start_vcpu();
     
-    while(1) {}
     return 0;
 }
 
 
 int hyper_init_primary()
 {
+    /* uart init */
     pl011_init();
     print_logo();
 
@@ -48,9 +51,6 @@ int hyper_init_primary()
 
     /* gicv3 init */
     gic_v3_init();
-    /* Config uart irq */
-    hyper_spi_config(UART_IRQ_LINE, GIC_EDGE_TRIGGER);
-    /* 开启中断 */
     irq_enable;
     
     stage2_mmu_init();

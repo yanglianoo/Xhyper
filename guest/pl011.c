@@ -50,6 +50,20 @@ int pl011_getc()
     }
 }
 
+void pl011_irq_handler()
+{
+    int status = *REG(PL011MIS);
+    if(status & (1 << 4)) {
+        for(;;) {
+            int c = pl011_getc();
+            if(c < 0)
+                break;
+            pl011_putc(c);
+        }
+    }
+    *REG(PL011ICR) = (1 << 4);
+}
+
 void pl011_init()
 {
     /* Disable the Uart */

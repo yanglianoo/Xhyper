@@ -6,7 +6,7 @@
 #include <spinlock.h>
 #include <vcpu.h>
 #include <vmmio.h>
-
+#include <vgicv3.h>
 
 struct vmmio_access;
 
@@ -25,6 +25,7 @@ typedef struct vm {
     u64       *vttbr;
     spinlock_t vm_lock;
     struct vcpu *vcpus[NCPU];
+    struct vgicv3_dist *vgic_dist;
     struct vmmio_info *vmmios;
 } vm_t;
 

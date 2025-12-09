@@ -22,6 +22,15 @@ struct gic_irq_ops {
     void (*set_active)(u32 irq);
 };
 
+struct gicv3_context {
+    u64 gic_lr[16];
+    u64 vmcr;
+    u64 sre_el1;
+};
+
+#define GIC_NSGI              (16)
+#define GIC_NPPI              (16)
+
 #define GIC_MIN_SPI0          (32)   // SPI中断号开始位置
 #define GIC_MIN_LPI           (8192) // LPI中断号开始位置
 
@@ -46,9 +55,11 @@ struct gic_irq_ops {
 #define GICD_ICFGR(n)           (0xc00  + (u64)(n) * 4) //中断配置寄存器，设置中断触发方式（边沿触发或电平触发）。
 #define GICD_IROUTER(n)         (0x6000 + (u64)(n) * 8) //中断路由寄存器，指定中断的目标 CPU 或亲和性（Affinity）。
 
-#define GICD_CTLR_ENABLE_G1A    (1U << 1)
-#define GICD_CTLR_ENABLE_G1     (1U << 0)
+#define GICD_CTLR_ENABLE_G1A    (1U << 1) // 使能非安全 Group1 中断。
+#define GICD_CTLR_ENABLE_G1     (1U << 0) // 使能 Group0 中断
 #define GICD_CTLR_ARE_NA        (1U << 4)
+
+#define GICD_TYPER_CPUNumber_SHIFT 5 // 目标 CPU 数量偏移
 
 /* Redistributor GICR_* are percpu registers, the stride is GICR_STRIDE */
 #define GICR_BASE_n(n)      (GICR_BASE + (n)*GICR_STRIDE)
@@ -120,6 +131,15 @@ struct gic_irq_ops {
 
 #define ICC_SRE_EL2         S3_4_C12_C9_5
 
+#define LR_STATE(n)         (((n) & 0x3L) << 62)
+#define LR_HW               (1L << 61)
+#define LR_GROUP(n)         (((n) & 0x1L) << 60)
+#define LR_PINTID(n)        (((n) & 0x3ffL) << 32) //物理中断ID
+#define LR_VINTID(n)        ((n) & 0xffffffffL)    //虚拟中断ID
+
+#define LR_PENDING          (1L)
+#define LR_IS_INACTIVE(lr)  (((lr >> 62) & 0x3) == 0L)
+
 /* GICD_* are all 32 bits register */
 static inline u32 GICD_READ32(u32 offset)
 {
@@ -153,8 +173,16 @@ static inline void GICR_WRITE64(int coreid, u32 offset, u32 val)
 }
 
 extern struct gic_irq_ops gicv3_ops;
+extern int gic_max_lrs;
+extern int gic_max_spi;
 
 void gic_v3_init(void);
 void gic_percpu_init(void);
 void hyper_spi_config(u32 irq, u32 type);
+void gic_context_init(struct gicv3_context *gic_context);
+void restore_gic_context(struct gicv3_context *gic_context);
+u64  gic_read_list_reg(int n);
+void gic_write_list_reg(int n, u64 val);
+u64  gic_create_lr(u32 pirq, u32 virq);
+
 #endif

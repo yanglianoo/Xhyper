@@ -3,6 +3,7 @@
 #include <types.h>
 #include <arch.h>
 #include <printf.h>
+#include <vgicv3.h>
 
 pcpu_t pcpus[NCPU];
 vcpu_t vcpus[NCPU];
@@ -80,6 +81,10 @@ vcpu_t *create_vcpu(vm_t *vm, int vcpuid, u64 entry)
     // cpu型号厂商等信息
     vcpu->sys_regs.midr_el1  = 0x410FD081;      /* used to fake the core to cortex-a72 */
 
+    /* alloc vgic cpu interface */
+    vcpu->vgic_cpu = create_vgic_cpu(vcpuid);
+
+    gic_context_init(&vcpu->gic_context);
     return vcpu;
 }
 
@@ -115,6 +120,8 @@ static void switch_vcpu(vcpu_t *vcpu)
     flush_tlb();
     /* 设置EL1/EL0系统寄存器的初始状态 */
     restore_sysreg(vcpu);
+    /* 恢复gic上下文 */
+    restore_gic_context(&vcpu->gic_context);
     isb();
     /* 切换到EL1 */
     switch_out();

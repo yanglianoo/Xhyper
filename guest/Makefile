@@ -19,7 +19,7 @@ C_FLAGS = -march=armv8-a+nosimd+nofp -ffreestanding -Wall -Wextra -Wfatal-errors
 INCLUDE_DIRS = -I./include
 
 # Source files
-VM_SRCS = head.S main.c printf.c libs.c pl011.c
+VM_SRCS = head.S main.c printf.c libs.c pl011.c gicv3.c vector.S
 
 # Object files (generate in build/, avoid duplicates)
 VM_OBJS = $(addprefix $(BUILD_DIR)/, $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(VM_SRCS))))
@@ -56,32 +56,31 @@ $(BUILD_DIR):
 # Compile .S files (source in root, output in build/)
 $(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
 	@echo "AS $< -> $@"
-	$(AS) $(ASM_FLAGS) $(INCLUDE_DIRS) -c $< -o $@ || { echo "Failed to compile $<"; exit 1; }
+	$(AS) $(ASM_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
 # Compile .c files (source in root, output in build/)
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@echo "CC $< -> $@"
-	$(CC) $(C_FLAGS) $(INCLUDE_DIRS) -c $< -o $@ || { echo "Failed to compile $<"; exit 1; }
+	$(CC) $(C_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
 # Create static library
 $(BUILD_DIR)/$(VM_LIB): $(VM_OBJS) | $(BUILD_DIR)
 	@echo "Creating static library $@"
-	$(AR) rcs $@ $(VM_OBJS) || { echo "Failed to create library $@"; exit 1; }
+	$(AR) rcs $@ $(VM_OBJS)
 
 # Link to create Guest_VM.elf
 $(BUILD_DIR)/$(EXEC): $(BUILD_DIR)/$(VM_LIB) $(LSCRIPT) | $(BUILD_DIR)
 	@echo "Linking $@"
-	$(LD) -pie -Map $(BUILD_DIR)/$(MAP) -T$(LSCRIPT) -L$(BUILD_DIR) -lvm_libs -o $@ || { echo "Link failed"; exit 1; }
+	$(LD) -pie -Map $(BUILD_DIR)/$(MAP) -T$(LSCRIPT) -L$(BUILD_DIR) -lvm_libs -o $@
 
 # Convert ELF to binary
 $(BUILD_DIR)/$(IMAGE): $(BUILD_DIR)/$(EXEC) | $(BUILD_DIR)
 	@echo "Generating binary $@"
-	$(OBJCOPY) -O binary -R .note -R .note.gnu.build-id -R .comment -S $< $@ || { echo "Objcopy failed"; exit 1; }
-
+	$(OBJCOPY) -O binary -R .note -R .note.gnu.build-id -R .comment -S $< $@
 # Convert binary to relocatable object
 $(BUILD_DIR)/$(OBJ): $(BUILD_DIR)/$(IMAGE) | $(BUILD_DIR)
 	@echo "Generating relocatable object $@"
-	$(LD) -r -b binary $< -o $@ || { echo "LD binary failed"; exit 1; }
+	$(LD) -r -b binary $< -o $@
 	@cp $@ .
 
 # Dependency generation

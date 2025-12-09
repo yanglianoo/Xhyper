@@ -18,14 +18,13 @@ include_directories("./include")
 
 set(VM_SRCS
 	./head.S
+	./vector.S
 	./pl011.c
 	./printf.c
 	./libs.c
+	./gicv3.c
 	./main.c
 )
-
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -ffreestanding -Wextra -Wfatal-errors -Werror -O0 -g3 -D__ASSEMBLY__")
-set(CMAKE_C_FLAGS 	"${CMAKE_C_FLAGS} -ffreestanding -Wall -Wextra -Wfatal-errors -Werror -Wno-psabi -O0 -g3 -D__LITTLE_ENDIAN")
 
 message("-- Compiling VM_libs --")
 add_library(vm_libs STATIC ${VM_SRCS})

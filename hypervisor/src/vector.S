@@ -119,7 +119,7 @@ hyper_vector:
 .org (vector_base + 0x200)
     b vector_el2_sync       // sync  暂时为空
 .org (vector_base + 0x280)
-    b vector_el2_irq        // IRQ 暂时为空
+    b vector_el2_irq        // IRQ 处理来自EL2的irq异常
 .org (vector_base + 0x300)
     b .                     // FIQ
 .org (vector_base + 0x380)
@@ -127,9 +127,9 @@ hyper_vector:
 
 /* Lower EL using aarch64 */
 .org (vector_base + 0x400)
-    b vector_el1_sync       // sync 处理来自EL1的异sync异常
+    b vector_el1_sync       // sync 处理来自EL1的sync异常
 .org (vector_base + 0x480)
-    b vector_el1_irq        // IRQ  暂时为空
+    b vector_el1_irq        // IRQ  处理来自EL1的irq异常
 .org (vector_base + 0x500)
     b .                     // FIQ
 .org (vector_base + 0x580)
@@ -168,6 +168,6 @@ vector_el1_sync:
 
 vector_el1_irq:
     save_vm_regs
-    bl el2_irq_proc
+    bl el1_irq_proc
     restore_vm_regs
     eret

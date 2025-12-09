@@ -4,7 +4,7 @@
 #include <xlog.h>
 #include <vcpu.h>
 #include <vpsci.h>  
-
+#include <vgicv3.h>
 
 static void vpsci_handler(vcpu_t *vcpu)
 {
@@ -121,7 +121,7 @@ void el1_sync_proc()
             vcpu->regs.elr += 4;
             break;
         /* data abort 内存访问异常*/
-            case 0x24:
+        case 0x24:
             LOG_INFO("\033[32m[el1_sync_proc] data abort from EL0/1\033[0m\n");
             data_abort_handler(vcpu, esr_iss, far);
             vcpu->regs.elr += 4;
@@ -132,4 +132,23 @@ void el1_sync_proc()
     }
 
     return;
+}
+
+/* 处理来自EL1的中断 */
+void el1_irq_proc(void)
+{
+    u32 iar, irq;
+    struct vcpu *vcpu;
+    read_sysreg(vcpu, tpidr_el2);
+    virq_enter(vcpu);
+
+    gicv3_ops.get_irq(&iar);
+    irq = iar & 0x3FF;
+
+    LOG_INFO("el1 irq proc\n");
+
+    gicv3_ops.guest_eoi(irq);
+
+    /* set pirq equal to virq */
+    virq_inject(vcpu, irq, irq);
 }

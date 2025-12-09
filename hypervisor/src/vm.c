@@ -158,12 +158,11 @@ void create_guest_vm(vm_config_t *vm_config)
     /* map the device memory */
     do_device_mapping(vttbr, vm_config);
 
-    /* TODO: test */
-    create_mmio_trap(vm, GICD_BASE, 0x10000, test_mmio_read, test_mmio_write);
-    create_mmio_trap(vm, GICR_BASE, 0x10000, NULL, NULL);
+    /* create new vgic distributor */
+    vm->vgic_dist = create_vgic_dist(vm);
+    
     /* set vcpu[0] ready */
     LOG_INFO("-->Set Guest vm vcpu[0] as ready\n");
-
     vm->vcpus[0]->state = VCPU_READY;
 
     return;

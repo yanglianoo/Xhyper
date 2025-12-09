@@ -4,6 +4,7 @@
 #include "types.h"
 #include "layout.h"
 #include "vm.h"
+#include "gicv3.h"
 
 enum vcpu_state {
     VCPU_UNUSED,
@@ -40,6 +41,8 @@ typedef struct vcpu {
     struct vm  *vm;
     int        cpuid;
     enum vcpu_state state;
+    struct vgicv3_cpu *vgic_cpu;
+    struct gicv3_context gic_context;
 } vcpu_t;
 
 // 物理cpu
