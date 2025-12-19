@@ -54,6 +54,7 @@ struct gicv3_context {
 #define GICD_ITARGETSR(n)       (0x800  + (u64)(n) * 4) //中断目标寄存器，指定中断的目标 CPU（GICv2 遗留，GICv3 部分支持）
 #define GICD_ICFGR(n)           (0xc00  + (u64)(n) * 4) //中断配置寄存器，设置中断触发方式（边沿触发或电平触发）。
 #define GICD_IROUTER(n)         (0x6000 + (u64)(n) * 8) //中断路由寄存器，指定中断的目标 CPU 或亲和性（Affinity）。
+#define GICD_PIDR2              (0xffe8)
 
 #define GICD_CTLR_ENABLE_G1A    (1U << 1) // 使能非安全 Group1 中断。
 #define GICD_CTLR_ENABLE_G1     (1U << 0) // 使能 Group0 中断

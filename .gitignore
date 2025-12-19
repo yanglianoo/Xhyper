@@ -1,3 +1,4 @@
 /build/
 /guest/build/
 /guest/*.o
+/linux-6.12/

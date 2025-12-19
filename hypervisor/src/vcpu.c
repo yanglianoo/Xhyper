@@ -55,6 +55,7 @@ static vcpu_t *vcpu_alloc()
 
 vcpu_t *create_vcpu(vm_t *vm, int vcpuid, u64 entry)
 {
+    u64 cnt;
     vcpu_t *vcpu = vcpu_alloc();
     if(vcpu == NULL) {
         abort("Unable to alloc a vcpu");
@@ -80,6 +81,17 @@ vcpu_t *create_vcpu(vm_t *vm, int vcpuid, u64 entry)
     vcpu->sys_regs.mpidr_el1 = vcpuid;          /* used to fake the mpidr_el1 */
     // cpu型号厂商等信息
     vcpu->sys_regs.midr_el1  = 0x410FD081;      /* used to fake the core to cortex-a72 */
+
+    read_sysreg(cnt, cntfrq_el0);
+    vcpu->sys_regs.cntfrq_el0 = cnt;
+
+    u64 val;
+    read_sysreg(val, cntfrq_el0);
+    LOG_INFO("cntfrq_el0 is %p\n", val);
+    
+    if(vcpuid == 0) {  /* If it is the primary virtual cpu, set the dtb address (ipa) */
+        vcpu->regs.x[0] = vm->dtb;
+    }
 
     /* alloc vgic cpu interface */
     vcpu->vgic_cpu = create_vgic_cpu(vcpuid);

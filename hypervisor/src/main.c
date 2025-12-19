@@ -23,6 +23,7 @@ void print_logo(void)
 
 extern void test_create_vm_mapping(void);
 extern guest_t guest_vm_image;
+extern guest_t guest_virt_dtb;
 
 int hyper_init_secondary()
 {
@@ -62,10 +63,11 @@ int hyper_init_primary()
 
     vm_config_t guest_vm_cfg = {
         .guest_image  = &guest_vm_image,
-        .guest_dtb    = NULL,
+        .guest_dtb    = &guest_virt_dtb,
         .guest_initrd = NULL,
-        .entry_addr   = 0x80200000,
-        .ram_size     = 0x80000,
+        .entry_addr   = 0x80600000,
+        .dtb_addr     = 0x80000000,  /* virt dtb ipa */
+        .ram_size     = 0x4000000,  /* 64M */
         .ncpu         = 2,
     };
 

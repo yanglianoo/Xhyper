@@ -53,6 +53,8 @@ u64 vpsci_trap_smc(vcpu_t *vcpu, u64 funid, u64 target_cpu, u64 entry_addr)
         case PSCI_FEATURE:    /* Linux will use this funid to get the PSCI FEATURE */
             /* fake it */
             return 0;
+        case 0x80000000:
+            return 0;
         default:
             abort("Unknown function id : %p from hvc/smc call", funid);
             return -1;

@@ -37,12 +37,12 @@ int vmmio_handler(struct vcpu *vcpu, int reg_num, struct vmmio_access *vmmio)
         if(m->base <= ipa && ipa < m->base + m->size) {
             if(vmmio->wnr) {
                 if(m->vmmio_write) {
-                    LOG_INFO("[VMMIO WRITE]: device base: %p, offset is %p, write value %p, to reg %p\n", m->base, ipa - m->base, val, reg_num);
+                    //LOG_INFO("[VMMIO WRITE]: device base: %p, offset is %p, write value %p, to reg %p\n", m->base, ipa - m->base, val, reg_num);
                     return m->vmmio_write(vcpu, ipa - m->base, val, vmmio);
                 }
             } else {
                 if(m->vmmio_read) {
-                    LOG_INFO("[VMMIO READ]: device base: %p, offset is %p, read to reg %p\n", m->base, ipa - m->base, reg_num);
+                    //LOG_INFO("[VMMIO READ]: device base: %p, offset is %p, read to reg %p\n", m->base, ipa - m->base, reg_num);
                     return m->vmmio_read(vcpu, ipa - m->base, reg, vmmio);
                 }
             }

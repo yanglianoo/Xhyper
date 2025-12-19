@@ -6,6 +6,11 @@
 #include <vpsci.h>  
 #include <vgicv3.h>
 
+#define SYSREG_OPCODE(op0, op1, crn, crm, op2) \
+     ((op0 << 20) | (op2 << 17) | (op1 << 14) | (crn << 10) | (crm << 1))
+
+#define VSYSREG_ICC_SGI1R_EL1   SYSREG_OPCODE(3, 0, 12, 11, 5)
+
 static void vpsci_handler(vcpu_t *vcpu)
 {
     /*
@@ -69,12 +74,30 @@ static int data_abort_handler(vcpu_t *vcpu, u64 esr_iss, u64 far)
     vmmio_acs.wnr = wnr;
 
     if(vmmio_handler(vcpu, srt, &vmmio_acs) < 0) {
-        LOG_WARN("VMMIO handler failed: ipa %p, va %p\n");
+        LOG_WARN("VMMIO handler failed: ipa %p, va %p\n", ipa, far);
         return -1;
     }
 
     return 0;
 }
+
+int vsysreg_handler(vcpu_t *vcpu, u64 iss)
+{
+    int write_not_read = !(iss & 1);
+    /* The Rt value from the issued instruction, the general-purpose register used for the transfer. */
+    int rt = (iss >> 5) & 0x1F;
+    iss = iss & ~(0x1F << 5);
+
+    switch(iss) {
+        case VSYSREG_ICC_SGI1R_EL1:
+            vgicv3_generate_sgi(vcpu, rt, write_not_read);
+        return 0;
+    }
+
+    LOG_WARN("Unable to handler a system register\n");
+    return -1;
+}
+
 void el1_sync_proc()
 {
     vcpu_t *vcpu;
@@ -108,6 +131,7 @@ void el1_sync_proc()
             /* hvc from EL1 will set the preferred exception return address to pc+4 */
             vcpu->regs.elr += 0;
             break;
+
         /* 64位环境下执行SMC（Secure Monitor Call）指令触发的异常。用于安全监控模式（EL3），实现安全世界与非安全世界的切换*/
         case 0x17:
             LOG_INFO("\033[32m[el1_sync_proc] smc trap from EL1\033[0m\n");
@@ -120,9 +144,18 @@ void el1_sync_proc()
              */
             vcpu->regs.elr += 4;
             break;
+
+        /* trapped by read/write system register */
+        case 0x18:
+            if(vsysreg_handler(vcpu, esr_iss) < 0) {
+                abort("Unknow system register trap");
+            }
+            vcpu->regs.elr += 4;
+            break;
+
         /* data abort 内存访问异常*/
         case 0x24:
-            LOG_INFO("\033[32m[el1_sync_proc] data abort from EL0/1\033[0m\n");
+            //LOG_INFO("\033[32m[el1_sync_proc] data abort from EL0/1\033[0m\n");
             data_abort_handler(vcpu, esr_iss, far);
             vcpu->regs.elr += 4;
             break;
@@ -145,10 +178,21 @@ void el1_irq_proc(void)
     gicv3_ops.get_irq(&iar);
     irq = iar & 0x3FF;
 
-    LOG_INFO("el1 irq proc\n");
-
+    //LOG_INFO("el1 irq proc\n");
+    //完成优先级降权
     gicv3_ops.guest_eoi(irq);
 
     /* set pirq equal to virq */
     virq_inject(vcpu, irq, irq);
+}
+
+int vgicv3_generate_sgi(struct vcpu *vcpu, int rt, int wr)
+{
+    u64  regs_sgi = vcpu->regs.x[rt];
+    u16  target   = regs_sgi & 0xFFFF;
+    u8   intid    = (regs_sgi >> 24) & 0xF;
+    bool irm      = (regs_sgi >> 40) & 0x1;
+
+    write_sysreg(ICC_SGI1R_EL1, regs_sgi);
+    return 1;
 }

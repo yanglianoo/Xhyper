@@ -17,6 +17,7 @@ typedef struct vm_config {
     u64      entry_addr;
     u64      ram_size;
     int      ncpu;
+    u64      dtb_addr;
 } vm_config_t;
 
 typedef struct vm {
@@ -27,6 +28,7 @@ typedef struct vm {
     struct vcpu *vcpus[NCPU];
     struct vgicv3_dist *vgic_dist;
     struct vmmio_info *vmmios;
+    u64        dtb;
 } vm_t;
 
 void create_guest_vm(vm_config_t *vm_config);

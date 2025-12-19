@@ -207,6 +207,9 @@ static int vgicd_read(struct vcpu *vcpu, u64 offset, u64 *val, struct vmmio_acce
         case GICD_IROUTER(32) ... GICD_IROUTER(1019) + 3:
             *val = 0;
             goto finished;
+        case GICD_PIDR2:
+            *val = GICD_READ32(GICD_PIDR2);
+            goto finished;
     }
 
     LOG_WARN("[vgicd_read] Unable to handle the GICD_* request\n");

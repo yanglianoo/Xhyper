@@ -19,6 +19,7 @@ static void vm_init(vm_t *vm, vm_config_t *vm_config)
     arch_spinlock_init(&vm->vm_lock);
     vm->nvcpu = vm_config->ncpu;
 
+    vm->dtb = vm_config->dtb_addr;
     /* set entry addr for primary core */
     vm->vcpus[0] = create_vcpu(vm, 0, vm_config->entry_addr);
 
@@ -80,6 +81,24 @@ static void do_memory_mapping(u64 *pgt, vm_config_t *vm_config)
             abort("Unable to alloc a page");
         }
         create_guest_mapping(pgt, vm_config->entry_addr + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
+    }
+
+    /* 映射dtb 文件*/
+    LOG_INFO("-->Create dtb range mapping for guest\n");
+    for(p = 0; p < vm_config->guest_dtb->image_size; p += PAGESIZE) {
+        char *page = alloc_one_page();
+        if(page == NULL) {
+            abort("Unable to alloc a page");
+        }
+
+        if(vm_config->guest_dtb->image_size - p > PAGESIZE) {
+            copy_size = PAGESIZE;
+        } else {
+            copy_size = vm_config->guest_dtb->image_size - p;
+        }
+        /* copy the guest image content from X-Hyper image to pages */
+        memcpy(page, (char *)vm_config->guest_dtb->start_addr + p, copy_size);
+        create_guest_mapping(pgt, vm_config->dtb_addr + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
     }
 
 }
@@ -153,7 +172,7 @@ void create_guest_vm(vm_config_t *vm_config)
 
     vm->vttbr = vttbr;
 
-    /* map the normal memory and image */
+    /* map the normal memory and image and dtb */
     do_memory_mapping(vttbr, vm_config);
     /* map the device memory */
     do_device_mapping(vttbr, vm_config);

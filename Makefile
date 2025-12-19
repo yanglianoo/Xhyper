@@ -47,7 +47,7 @@ X_HYPER_OBJS := $(patsubst %.S,build/%.o,$(X_HYPER_OBJS))
 # Linker script and guest VM image
 LSCRIPT_SRC = hypervisor/src/lds/linker.ld.S
 LSCRIPT = build/linker.ld
-GUEST_VM_IMAGE = ./guest/Guest_VM.o
+GUEST_VM_IMAGE = ./linux/image.o ./linux/virt.dtb.o
 
 # Output files (placed in build/)
 LIB = build/libx_hyper_libs.a

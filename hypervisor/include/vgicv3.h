@@ -26,9 +26,9 @@ struct vgicv3_dist {
     spinlock_t lock;
 };
 
-/* virtual gic cpu interface */
+/* virtual gic Redistributor*/
 struct vgicv3_cpu {
-    u16 used_lr;
+    u16 used_lr; //16个LR寄存器的bitmap
     struct vgicv3_irq_config sgis[GIC_NSGI];   // 虚拟SGI中断配置
     struct vgicv3_irq_config ppis[GIC_NPPI];   // 虚拟PPI中断配置
 };
@@ -37,5 +37,6 @@ struct vgicv3_cpu *create_vgic_cpu(int vcpuid);
 struct vgicv3_dist *create_vgic_dist(struct vm *vm);
 void virq_enter(struct vcpu *vcpu);
 int  virq_inject(struct vcpu *vcpu, u32 pirq, u32 virq);
+int  vgicv3_generate_sgi(struct vcpu *vcpu, int rt, int wr);
 
 #endif
