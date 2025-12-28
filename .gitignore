@@ -2,3 +2,4 @@
 /guest/build/
 /guest/*.o
 /linux-6.12/
+/busybox-1_35_0/

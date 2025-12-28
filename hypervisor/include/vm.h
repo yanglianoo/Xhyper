@@ -18,6 +18,7 @@ typedef struct vm_config {
     u64      ram_size;
     int      ncpu;
     u64      dtb_addr;
+    u64      rootfs_addr;
 } vm_config_t;
 
 typedef struct vm {

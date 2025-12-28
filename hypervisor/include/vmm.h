@@ -79,5 +79,5 @@ void hyper_setup();
 void create_guest_mapping(u64 *pgt, u64 va, u64 pa, u64 size, u64 mattr);
 void page_unmap(u64 *pgt, u64 va, u64 size);
 u64 *page_walk(u64 *pgt, u64 va, bool alloc);
-
+void copy_to_ipa(u64 *pgt, u64 to_ipa, char *from, u64 len);
 #endif

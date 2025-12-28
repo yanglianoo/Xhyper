@@ -99,6 +99,7 @@ static void do_memory_mapping(u64 *pgt, vm_config_t *vm_config)
         /* copy the guest image content from X-Hyper image to pages */
         memcpy(page, (char *)vm_config->guest_dtb->start_addr + p, copy_size);
         create_guest_mapping(pgt, vm_config->dtb_addr + p, (u64)page, PAGESIZE, S2PTE_NORMAL | S2PTE_RW);
+        copy_to_ipa(pgt, vm_config->rootfs_addr, (char *)vm_config->guest_initrd->start_addr, vm_config->guest_initrd->image_size);
     }
 
 }

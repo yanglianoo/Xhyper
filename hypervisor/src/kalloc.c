@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "spinlock.h"
 #include "layout.h"
-
+#include "xlog.h"
 extern char HIMAGE_END[];
 
 struct header {
@@ -53,5 +53,9 @@ void kalloc_init()
     for(u64 page = (u64)HIMAGE_END; page < PHYEND;  page +=  SZ_4K) {
         free_one_page((void *)page);
     }
+
+    LOG_INFO("Kalloc have been initialized: \n");
+    LOG_INFO("Kalloc: page start addr : %x\n", (u64)HIMAGE_END);
+    LOG_INFO("Kalloc: page numbers    : %x\n", (PHYEND - (u64)HIMAGE_END)/PAGESIZE);
 }
 

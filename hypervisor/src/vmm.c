@@ -5,7 +5,7 @@
 #include "kalloc.h"
 #include "vmm.h"
 #include "xlog.h"
-
+#include "utils.h"
 /*
 遍历 Stage-2 页表（从 L0 到 L2），找到或创建 L3 页表项。
 */
@@ -81,6 +81,37 @@ void page_unmap(u64 *pgt, u64 va, u64 size)
         u64 pa = PTE_PA(*pte);
         free_one_page((void *)pa);
         *pte = 0;
+    }
+}
+
+u64 ipa_to_pa(u64 *pgt, u64 ipa)
+{
+    u64 *pte = page_walk(pgt, ipa, 0);
+    if(pte == NULL) {
+        return 0;
+    }
+
+    u32 offset = ipa & (PAGESIZE - 1);
+    return PTE_PA(*pte) + offset;
+}
+
+void copy_to_ipa(u64 *pgt, u64 to_ipa, char *from, u64 len)
+{
+    while(len > 0) {
+        u64 pa = ipa_to_pa(pgt, to_ipa);
+        if(pa == 0) {
+            abort("Copy to ipa failed to find pte");
+        }
+        u64 poff = to_ipa & (PAGESIZE - 1);
+        u64 n = PAGESIZE - poff;
+        if(n > len) {
+            n = len;
+        }
+
+        memcpy((char *)pa, from, n);
+        from += n;
+        to_ipa += n;
+        len -= n;
     }
 }
 

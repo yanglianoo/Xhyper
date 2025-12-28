@@ -11,6 +11,11 @@ extern char _binary_virt_dtb_start[];
 extern char _binary_virt_dtb_end[];
 extern char _binary_virt_dtb_size[];
 
+/* rootfs */
+extern char _binary_rootfs_cpio_start[];
+extern char _binary_rootfs_cpio_end[];
+extern char _binary_rootfs_cpio_size[];
+
 #if 0
 guest_t guest_vm_image = {
     .guest_name  = "guest_vm",
@@ -21,7 +26,7 @@ guest_t guest_vm_image = {
 #endif
 
 guest_t guest_vm_image = {
-    .guest_name  = "guest_vm",
+    .guest_name  = "linux_vm",
     .start_addr  = (u64)_binary_Image_start,
     .end_addr    = (u64)_binary_Image_end,
     .image_size  = (u64)_binary_Image_size,
@@ -32,4 +37,11 @@ guest_t guest_virt_dtb = {
     .start_addr  = (u64)_binary_virt_dtb_start,
     .end_addr    = (u64)_binary_virt_dtb_end,
     .image_size  = (u64)_binary_virt_dtb_size,
+};
+
+guest_t guest_rootfs = {
+    .guest_name = "rootfs",
+    .start_addr = (u64)_binary_rootfs_cpio_start,
+    .end_addr   = (u64)_binary_rootfs_cpio_end,
+    .image_size = (u64)_binary_rootfs_cpio_size,
 };
